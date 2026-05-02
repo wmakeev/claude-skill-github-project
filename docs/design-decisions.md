@@ -74,17 +74,11 @@ The skill's main entry point is `diagnose.sh`, not `setup-project.sh`. Diagnose 
 
 ### Confirmation before every modification
 
-Every state-changing action calls `confirm()`. The default is "no" — explicit `y` is required. Bypass via `NONINTERACTIVE=1` for tests.
+Every state-changing action calls `confirm()`. The default is "no" — explicit `y` is required. Bypass via `NONINTERACTIVE=1` for non-interactive environments (Claude Code's Bash tool, CI, scripts) — this is the official mechanism, not a test-only escape hatch.
 
-**Why:** explicit user requirement. The user wants visibility into what the skill is about to do, with the option to abort.
+`confirm()` also auto-detects the absence of a controlling terminal: if no TTY is available and `NONINTERACTIVE=1` is not set, it exits with a clear error naming the variable to set. This prevents silent hangs in headless environments.
 
-### GraphQL via direct string assembly, not JSON conversion
-
-`build_options_literal` in `setup-project.sh` builds the `singleSelectOptions` GraphQL literal by concatenating bash strings, not by emitting JSON and stripping quotes around enum values.
-
-**Why:** GraphQL color values are unquoted enums (`RED`, `BLUE`, ...), which JSON cannot represent. The first draft used `jq` to emit JSON then `sed` to strip the quotes — fragile and confusing. Direct assembly is clearer because it admits no possibility of JSON-to-GraphQL syntax mismatch.
-
-**Safety:** option names and colors come from the hard-coded spec, not user input, so there is no injection concern. If the spec ever takes user input, this needs revisiting.
+**Why:** explicit user requirement. The user wants visibility into what the skill is about to do, with the option to abort. Non-interactive callers declare their intent explicitly.
 
 ### `gh project` subcommand is the minimum requirement (≥ 2.20)
 

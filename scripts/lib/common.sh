@@ -29,7 +29,7 @@ is_tty() { [[ -r /dev/tty ]]; }
 
 # --- Confirmation prompt (interactive) ----------------------------------------
 # Used before every modifying action. Defaults to "no" — requires explicit yes.
-# Bypass with NONINTERACTIVE=1 (e.g. for tests; not recommended in normal use).
+# Bypass with NONINTERACTIVE=1 for non-interactive environments (Claude Code, CI).
 
 confirm() {
     local prompt="${1:-Proceed?}"
