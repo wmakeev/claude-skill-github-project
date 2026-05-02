@@ -59,8 +59,17 @@ if [[ -f "$BOT_CONFIG" ]]; then
 fi
 
 ask_field() {
-    local key="$1" label="$2"
+    local key="$1" label="$2" env_var="$3"
     local default="${current[$key]:-}"
+    # Env variable takes precedence over both TTY and existing config default.
+    if [[ -n "${!env_var:-}" ]]; then
+        printf '%s' "${!env_var}"
+        return 0
+    fi
+    if ! is_tty; then
+        log_error "No TTY available. Set $env_var env var or run from a terminal."
+        return 1
+    fi
     local prompt="$label"
     [[ -n "$default" ]] && prompt+=" [$default]"
     prompt+=": "
@@ -87,9 +96,9 @@ If you don't have one yet:
 
 EOF
 
-app_id=$(ask_field app_id "App ID")
-installation_id=$(ask_field installation_id "Installation ID")
-key_path=$(ask_field private_key_path "Absolute path to private key (.pem)")
+app_id=$(ask_field app_id "App ID" "BOT_APP_ID")
+installation_id=$(ask_field installation_id "Installation ID" "BOT_INSTALLATION_ID")
+key_path=$(ask_field private_key_path "Absolute path to private key (.pem)" "BOT_KEY_PATH")
 key_path="${key_path/#\~/$HOME}"
 
 if [[ ! -f "$key_path" ]]; then
@@ -123,15 +132,16 @@ fi
 
 # --- Verify token works and capture bot login ---------------------------------
 
+log_info "Fetching App identity via JWT..."
+app_info=$(python3 "$BOT_TOKEN_SCRIPT" --app-info) || {
+    log_error "Failed to fetch App identity. Check App ID and private key."
+    exit 1
+}
+login=$(printf '%s' "$app_info" | jq -r '.login')
+
 log_info "Requesting installation token..."
 token=$(python3 "$BOT_TOKEN_SCRIPT") || {
     log_error "Token generation failed. Check the App is installed on at least one repo."
-    exit 1
-}
-
-log_info "Verifying token..."
-login=$(GH_TOKEN="$token" gh api user --jq '.login') || {
-    log_error "Token verification failed."
     exit 1
 }
 
