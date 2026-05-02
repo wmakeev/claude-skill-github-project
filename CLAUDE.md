@@ -38,7 +38,7 @@ All GitHub-side IDs (project node ID, field IDs, option IDs) are resolved via `g
 ## Key design constraints
 
 - **No auto-fix for option drift** — if `Impact`/`Effort`/`Status` options diverge from spec, scripts report it but do not modify. Auto-rewrite would corrupt values pinned to existing cards.
-- **Confirmation before every write** — `confirm()` defaults to "no"; bypass with `NONINTERACTIVE=1` (for tests only).
+- **Confirmation before every write** — `confirm()` defaults to "no"; bypass with `NONINTERACTIVE=1` for non-interactive environments (Claude Code, CI).
 - **`gh` ≥ 2.20 required** — scripts use `gh project` subcommands; `diagnose.sh` checks the version.
 - **One bot, all projects** — bot config is per-machine in `~/.config/claude-github-bot/`, not per-repo.
 
@@ -58,6 +58,14 @@ GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) gh issue comment 42
 ## No automated tests
 
 There is no test suite (see `docs/roadmap.md#test-coverage`). Validation is done by running `diagnose.sh` against a real GitHub project.
+
+## Docs to update after making changes
+
+| File | When to update |
+|---|---|
+| `docs/history.md` | After every non-trivial fix or improvement — add an entry with the problem found, root cause, and what was changed. Newest entries go at the top. |
+| `docs/design-decisions.md` | When a structural decision changes or a new tradeoff is made. |
+| `docs/roadmap.md` | When a planned item is implemented or a new known gap is identified. |
 
 ## Distribution
 
