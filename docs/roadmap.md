@@ -44,7 +44,7 @@ The skill creates the field with a placeholder option (`(unset)`) and does not e
 
 ### `gh` version constraint
 
-Scripts use `gh api graphql` exclusively, which works on all `gh` versions. They do not use the more readable `gh project` subcommands (`gh` ≥ 2.20). If the supported `gh` floor moves up, scripts can be simplified.
+Scripts use `gh project` subcommands (migrated from `gh api graphql` in v1). This requires `gh` ≥ 2.20, which `diagnose.sh` checks on every run.
 
 ### No Windows support tested
 
