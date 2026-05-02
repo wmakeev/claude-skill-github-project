@@ -110,22 +110,3 @@ project_config_get() {
     jq -r "$path" "$PROJECT_CONFIG_FILE"
 }
 
-# --- GraphQL helper -----------------------------------------------------------
-# Wraps `gh api graphql` with a heredoc-friendly interface.
-# Uses the user's gh token by default. For bot-attributed actions, pass
-# AS_BOT=1 in the environment.
-
-gql() {
-    local query="$1"
-    shift
-    local args=()
-    while [[ $# -gt 0 ]]; do
-        args+=(-f "$1")
-        shift
-    done
-    if [[ "${AS_BOT:-0}" == "1" ]]; then
-        GH_TOKEN=$(bot_token) gh api graphql -f query="$query" "${args[@]}"
-    else
-        gh api graphql -f query="$query" "${args[@]}"
-    fi
-}

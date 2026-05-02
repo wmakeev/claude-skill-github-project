@@ -20,7 +20,7 @@ Three operational layers, each with a corresponding script:
 
 ### Shared libraries
 
-- `scripts/lib/common.sh` — paths, logging helpers, `confirm()`, `detect_repo()`, `bot_token()`, `gql()` wrapper
+- `scripts/lib/common.sh` — paths, logging helpers, `confirm()`, `detect_repo()`, `bot_token()`
 - `scripts/lib/project-spec.sh` — single source of truth for desired project state (field names, option colors, status columns, labels). Edit here when conventions change; both scripts pick it up automatically.
 
 ### Storage layout
@@ -33,13 +33,13 @@ Three operational layers, each with a corresponding script:
 | Issue template | `.github/ISSUE_TEMPLATE/task.md` |
 | Workflow doc snippet | `templates/CLAUDE.md.snippet` (inserted between markers in project CLAUDE.md) |
 
-All GitHub-side IDs (project node ID, field IDs, option IDs) are resolved via GraphQL on every run — no client-side cache.
+All GitHub-side IDs (project node ID, field IDs, option IDs) are resolved via `gh project` on every run — no client-side cache.
 
 ## Key design constraints
 
 - **No auto-fix for option drift** — if `Impact`/`Effort`/`Status` options diverge from spec, scripts report it but do not modify. Auto-rewrite would corrupt values pinned to existing cards.
 - **Confirmation before every write** — `confirm()` defaults to "no"; bypass with `NONINTERACTIVE=1` (for tests only).
-- **GraphQL only** — `gh api graphql` is used for all project operations (not `gh project`) because the user's `gh` version predates that subcommand.
+- **`gh` ≥ 2.20 required** — scripts use `gh project` subcommands; `diagnose.sh` checks the version.
 - **One bot, all projects** — bot config is per-machine in `~/.claude/github-bot/`, not per-repo.
 
 ## Running the scripts

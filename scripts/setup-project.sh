@@ -50,61 +50,26 @@ PROJECT_NUMBER=$(project_config_get '.project_number')
 # --- Step 2: resolve project node ID and its current fields -------------------
 
 log_info "Querying current project state..."
-state_json=$(gql 'query($login: String!, $num: Int!) {
-  user(login: $login) {
-    projectV2(number: $num) {
-      id title
-      fields(first: 50) {
-        nodes {
-          __typename
-          ... on ProjectV2Field { id name dataType }
-          ... on ProjectV2SingleSelectField {
-            id name dataType
-            options { id name color }
-          }
-        }
-      }
-    }
-  }
-}' login="$OWNER" num="$PROJECT_NUMBER")
-
-project_id=$(printf '%s' "$state_json" | jq -r '.data.user.projectV2.id // empty')
+view_json=$(gh project view "$PROJECT_NUMBER" --owner "$OWNER" --format json 2>/dev/null)
+project_id=$(printf '%s' "$view_json" | jq -r '.id // empty')
 if [[ -z "$project_id" ]]; then
     log_error "Project #$PROJECT_NUMBER not found for user $OWNER."
     log_error "Either the project number is wrong or you lack access."
     exit 1
 fi
-log_ok "Project: $(printf '%s' "$state_json" | jq -r '.data.user.projectV2.title') ($project_id)"
+log_ok "Project: $(printf '%s' "$view_json" | jq -r '.title') ($project_id)"
 
-# Extract current fields as a JSON object: { name -> {id, dataType, options:[{id,name,color}]} }
-current_fields=$(printf '%s' "$state_json" | jq '
-    .data.user.projectV2.fields.nodes
+fields_json=$(gh project field-list "$PROJECT_NUMBER" --owner "$OWNER" --format json)
+
+# Extract current fields as a JSON object: { name -> {id, options:[{id, name}]} }
+current_fields=$(printf '%s' "$fields_json" | jq '
+    .fields
     | map(select(.name != null))
-    | map({(.name): {id: .id, dataType: .dataType,
-                     options: ((.options // []) | map({id, name, color}))}})
+    | map({(.name): {id: .id, options: ((.options // []) | map({id, name}))}})
     | add // {}
 ')
 
 # --- Step 3: ensure custom fields match spec ----------------------------------
-
-# Build the singleSelectOptions GraphQL literal from a TSV spec.
-# Direct string assembly is safer than jq + sed conversion because option
-# names and colors come from our own spec file, not user input — no
-# escaping concerns — and the GraphQL color enum needs to be unquoted,
-# which JSON cannot represent.
-build_options_literal() {
-    local spec_tsv="$1"
-    local out="["
-    local first=1
-    while IFS=$'\t' read -r name color; do
-        [[ -z "$name" ]] && continue
-        [[ $first -eq 0 ]] && out+=", "
-        out+='{name: "'"$name"'", color: '"$color"', description: ""}'
-        first=0
-    done <<< "$spec_tsv"
-    out+="]"
-    printf '%s' "$out"
-}
 
 # Ensure a single-select field exists with the given options.
 # Args: <field name> <spec TSV (name<TAB>color per line)> [optional: skip-options]
@@ -118,21 +83,25 @@ ensure_singleselect_field() {
 
     if [[ -z "$field_json" ]]; then
         log_info "Field '$field_name' is missing."
-        local options_literal
-        if [[ "$skip_options" == "yes" ]]; then
-            log_warn "'$field_name' is created with a placeholder option; manage real options in the UI."
-            options_literal='[{name: "(unset)", color: GRAY, description: ""}]'
-        else
-            options_literal=$(build_options_literal "$spec_tsv")
-        fi
         confirm "Create field '$field_name'?" || return 0
-        gql 'mutation($p: ID!) {
-            createProjectV2Field(input: {
-                projectId: $p, dataType: SINGLE_SELECT, name: "'"$field_name"'",
-                singleSelectOptions: '"$options_literal"'
-            }) { projectV2Field { ... on ProjectV2SingleSelectField { id } } }
-        }' p="$project_id" >/dev/null
-        log_ok "Created '$field_name'."
+        if [[ "$skip_options" == "yes" ]]; then
+            gh project field-create "$PROJECT_NUMBER" --owner "$OWNER" \
+                --name "$field_name" --data-type "SINGLE_SELECT" \
+                --single-select-options "(unset)" >/dev/null
+            log_ok "Created '$field_name' (options managed in the UI)."
+        else
+            local options_csv
+            options_csv=$(printf '%s\n' "$spec_tsv" | awk -F'\t' 'NF>0 && $1!="" {printf "%s%s", sep, $1; sep=","} END{print ""}')
+            gh project field-create "$PROJECT_NUMBER" --owner "$OWNER" \
+                --name "$field_name" --data-type "SINGLE_SELECT" \
+                --single-select-options "$options_csv" >/dev/null
+            log_ok "Created '$field_name'."
+            log_warn "Option colors must be set manually. Open the project → '$field_name' field in GitHub UI and apply:"
+            while IFS=$'\t' read -r opt_name opt_color; do
+                [[ -z "$opt_name" ]] && continue
+                log_warn "  $opt_name → $opt_color"
+            done <<< "$spec_tsv"
+        fi
         return 0
     fi
 
@@ -141,13 +110,13 @@ ensure_singleselect_field() {
         return 0
     fi
 
-    # Compare options. We do not auto-delete or rename options because that
+    # Compare option names. We do not auto-delete or rename options because that
     # would silently destroy user data on existing items. We only report drift.
     local current_opts desired_opts
-    current_opts=$(printf '%s' "$field_json" | jq -c '.options | map({name, color})')
+    current_opts=$(printf '%s' "$field_json" | jq -c '.options | map(.name)')
     desired_opts=$(printf '%s\n' "$spec_tsv" | jq -Rcs '
         split("\n") | map(select(length > 0))
-        | map(split("\t") | {name: .[0], color: .[1]})
+        | map(split("\t")[0])
     ')
     if [[ "$current_opts" == "$desired_opts" ]]; then
         log_ok "Field '$field_name' matches spec."

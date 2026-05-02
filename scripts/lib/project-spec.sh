@@ -25,15 +25,13 @@ EOF
 
 # --- Single-select custom fields ----------------------------------------------
 # Format per field block:
-#   FIELD_NAME=<name>
-#   <option_name>	<color>
 #   <option_name>	<color>
 #   ...
 #
 # Colors follow GitHub's enum: GRAY, BLUE, GREEN, YELLOW, ORANGE, RED, PINK, PURPLE.
-# Convention used here:
-#   - Impact: traffic-light by importance (red = highest)
-#   - Effort: traffic-light by cost (red = largest)
+# Colors are NOT applied programmatically (gh project field-create does not support
+# per-option colors). They serve as a reference for manual UI configuration.
+# Convention: Impact/Effort use traffic-light palette (red = highest/largest).
 
 SPEC_FIELD_IMPACT=$(cat <<'EOF'
 Very High	RED

@@ -86,13 +86,15 @@ Every state-changing action calls `confirm()`. The default is "no" — explicit 
 
 **Safety:** option names and colors come from the hard-coded spec, not user input, so there is no injection concern. If the spec ever takes user input, this needs revisiting.
 
-### `gh api graphql` chosen over `gh project` subcommand
+### `gh project` subcommand is the minimum requirement (≥ 2.20)
 
-All project operations go through `gh api graphql`. The `gh project` subcommand would be higher-level and easier to read.
+All project operations use `gh project` subcommands (`gh project view`, `gh project field-list`, `gh project field-create`). The `gh api graphql` wrapper (`gql()`) has been removed.
 
-**Why:** the user is on `gh` 2.4.0 (Ubuntu apt), which predates `gh project`. The GraphQL API is stable across all `gh` versions. When the user upgrades `gh`, the scripts continue to work — there is no urgency to refactor.
+**Why:** `gh project` is more readable and requires no manual GraphQL query construction. The user has the latest `gh` installed, making this the natural baseline.
 
-**When to revisit:** if `gh` ≥ 2.20 becomes the supported floor, `gh project` is more readable and worth migrating to.
+**Tradeoff:** `gh project field-create --single-select-options` does not support per-option colors. Fields Impact/Effort are created with the correct option names but no colors. Colors can be assigned once in the GitHub UI after initial setup; subsequent idempotent runs do not touch them.
+
+**Minimum version:** `gh` ≥ 2.20. `diagnose.sh` checks and fails fast if the installed version is too old.
 
 ## CLAUDE.md integration
 

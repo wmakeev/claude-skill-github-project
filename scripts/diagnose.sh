@@ -38,6 +38,19 @@ for cmd in gh jq git python3; do
     fi
 done
 
+# Require gh >= 2.20 for the `gh project` subcommand.
+if command -v gh >/dev/null 2>&1; then
+    gh_ver=$(gh --version 2>/dev/null | grep -oP '\d+\.\d+\.\d+' | head -1)
+    gh_major=$(printf '%s' "$gh_ver" | cut -d. -f1)
+    gh_minor=$(printf '%s' "$gh_ver" | cut -d. -f2)
+    if [[ $gh_major -gt 2 || ($gh_major -eq 2 && $gh_minor -ge 20) ]]; then
+        pass "tools" "gh $gh_ver has 'gh project' subcommand"
+    else
+        fail "tools" "gh $gh_ver is too old; need >= 2.20 for 'gh project' subcommand"
+        hint "upgrade gh: https://cli.github.com"
+    fi
+fi
+
 # --- gh auth ------------------------------------------------------------------
 
 if gh auth status >/dev/null 2>&1; then
@@ -132,29 +145,19 @@ fi
 if project_config_exists && command -v gh >/dev/null 2>&1; then
     owner=$(project_config_get '.owner')
     pnum=$(project_config_get '.project_number')
-    pjson=$(gh api graphql -f query='query($l: String!, $n: Int!) {
-      user(login: $l) { projectV2(number: $n) {
-        id title
-        fields(first: 50) {
-          nodes {
-            __typename
-            ... on ProjectV2Field { name }
-            ... on ProjectV2SingleSelectField { name options { name } }
-          }
-        }
-      } }
-    }' -f l="$owner" -F n="$pnum" 2>/dev/null)
 
-    pid=$(printf '%s' "$pjson" | jq -r '.data.user.projectV2.id // empty')
+    view_json=$(gh project view "$pnum" --owner "$owner" --format json 2>/dev/null)
+    pid=$(printf '%s' "$view_json" | jq -r '.id // empty')
     if [[ -z "$pid" ]]; then
         fail "project" "project #$pnum not accessible for $owner"
         hint "check that the project exists and gh has access"
     else
-        pass "project" "project '$(printf '%s' "$pjson" | jq -r '.data.user.projectV2.title')' resolved"
+        pass "project" "project '$(printf '%s' "$view_json" | jq -r '.title')' resolved"
+        fields_json=$(gh project field-list "$pnum" --owner "$owner" --format json 2>/dev/null)
         # Verify each managed field exists.
         for f in "${SPEC_CUSTOM_FIELDS[@]}"; do
-            if printf '%s' "$pjson" | jq -e --arg n "$f" \
-                '.data.user.projectV2.fields.nodes | any(.name == $n)' >/dev/null
+            if printf '%s' "$fields_json" | jq -e --arg n "$f" \
+                '.fields | any(.name == $n)' >/dev/null
             then
                 pass "field-$f" "exists"
             else
@@ -163,9 +166,8 @@ if project_config_exists && command -v gh >/dev/null 2>&1; then
             fi
         done
         # Verify Status options.
-        actual_status=$(printf '%s' "$pjson" | jq -c \
-            '.data.user.projectV2.fields.nodes
-             | map(select(.name == "Status")) | .[0].options // [] | map(.name)')
+        actual_status=$(printf '%s' "$fields_json" | jq -c \
+            '.fields | map(select(.name == "Status")) | .[0].options // [] | map(.name)')
         spec_status=$(printf '%s\n' "$SPEC_STATUS_OPTIONS" | jq -Rcs \
             'split("\n") | map(select(length > 0)) | map(split("\t")[0])')
         if [[ "$actual_status" == "$spec_status" ]]; then
