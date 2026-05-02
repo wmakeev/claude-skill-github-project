@@ -31,9 +31,37 @@ Manages an opinionated GitHub Project (Board) setup for issue-driven development
 
 ```bash
 bash scripts/diagnose.sh
+# or with absolute path (when CWD is not the skill directory):
+bash ~/.claude/skills/github-project/scripts/diagnose.sh
 ```
 
-Exit codes: `0` = clean, `1` = warnings, `2` = failures.
+Exit codes: `0` = clean, `1` = warnings/skipped, `2` = failures.
+
+## Running from Claude Code (non-interactive)
+
+Claude Code's Bash tool runs without a controlling terminal, so any
+`read </dev/tty` would fail. Set parameters via env vars instead:
+
+```bash
+# Bot setup (one-time per machine)
+BOT_APP_ID=3172171 \
+BOT_INSTALLATION_ID=118624077 \
+BOT_KEY_PATH=~/key.pem \
+NONINTERACTIVE=1 \
+bash ~/.claude/skills/github-project/scripts/setup-bot.sh
+
+# Project setup (per repo)
+GITHUB_PROJECT_NUMBER=7 \
+NONINTERACTIVE=1 \
+bash ~/.claude/skills/github-project/scripts/setup-project.sh
+
+# Diagnose (always safe, no env needed)
+bash ~/.claude/skills/github-project/scripts/diagnose.sh
+```
+
+`NONINTERACTIVE=1` disables all confirmation prompts and is required for any
+write operation. Without it, the script will refuse to proceed if no TTY is
+available and will print a clear message naming the env var to set.
 
 ## Components
 
