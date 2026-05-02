@@ -23,10 +23,14 @@ EXIT_CODE=0
 mark_warn() { [[ $EXIT_CODE -lt 1 ]] && EXIT_CODE=1; }
 mark_fail() { EXIT_CODE=2; }
 
-pass() { echo "[PASS] $1: $2"; }
-warn() { echo "[WARN] $1: $2"; mark_warn; }
-fail() { echo "[FAIL] $1: $2"; mark_fail; }
+_CNT_PASS=0; _CNT_WARN=0; _CNT_FAIL=0; _CNT_SKIP=0
+_SKIPPED_NAMES=()
+
+pass() { echo "[PASS] $1: $2"; _CNT_PASS=$((_CNT_PASS+1)); }
+warn() { echo "[WARN] $1: $2"; mark_warn; _CNT_WARN=$((_CNT_WARN+1)); }
+fail() { echo "[FAIL] $1: $2"; mark_fail; _CNT_FAIL=$((_CNT_FAIL+1)); }
 hint() { echo "[INFO] suggestion: $1"; }
+skip() { echo "[SKIP] $1: $2"; _CNT_SKIP=$((_CNT_SKIP+1)); _SKIPPED_NAMES+=("$1"); mark_warn; }
 
 # --- Required commands --------------------------------------------------------
 
@@ -104,25 +108,40 @@ fi
 
 # Try a real token call only if config + key + script all present.
 if [[ -f "$BOT_CONFIG" && -f "$BOT_TOKEN_SCRIPT" ]]; then
-    token_out=$(python3 "$BOT_TOKEN_SCRIPT" 2>&1)
+    token_out=$(timeout 15 python3 "$BOT_TOKEN_SCRIPT" 2>&1)
     rc=$?
-    if [[ $rc -eq 0 && -n "$token_out" ]]; then
-        login=$(GH_TOKEN="$token_out" gh api user --jq '.login' 2>/dev/null)
-        if [[ -n "$login" ]]; then
-            pass "bot-token" "token issues correctly, identity: $login"
-            expected=$(jq -r '.bot_login // empty' "$BOT_CONFIG")
-            if [[ -n "$expected" && "$expected" != "$login" ]]; then
-                warn "bot-token" "actual login '$login' != config bot_login '$expected'"
+    case $rc in
+        0)
+            if [[ -n "$token_out" ]]; then
+                # GraphQL viewer works with installation tokens; GET /user does not.
+                login=$(timeout 10 sh -c \
+                    "GH_TOKEN='$token_out' gh api graphql \
+                        -f query='{ viewer { login } }' \
+                        --jq '.data.viewer.login'" 2>/dev/null) || true
+                if [[ -n "$login" ]]; then
+                    pass "bot-token" "token issues correctly, identity: $login"
+                    expected=$(jq -r '.bot_login // empty' "$BOT_CONFIG")
+                    if [[ -n "$expected" && "$expected" != "$login" ]]; then
+                        warn "bot-token" "actual login '$login' != config bot_login '$expected'"
+                    fi
+                else
+                    warn "bot-token" "token issued but identity check via GraphQL failed"
+                fi
+            else
+                fail "bot-token" "token request returned empty output"
             fi
-        else
-            warn "bot-token" "token issued but identity check failed"
-        fi
-    else
-        fail "bot-token" "token request failed (rc=$rc)"
-        echo "$token_out" | sed 's/^/        /'
-        hint "the App may not be installed on this repo, or installation_id is wrong"
-        hint "fix at: https://github.com/settings/installations/$(jq -r '.installation_id // ""' "$BOT_CONFIG")"
-    fi
+            ;;
+        124)
+            skip "bot-token" "token request timed out (>15s) — network issue?"
+            hint "check network/proxy, then re-run diagnose.sh"
+            ;;
+        *)
+            fail "bot-token" "token request failed (rc=$rc)"
+            echo "$token_out" | sed 's/^/        /'
+            hint "the App may not be installed on this repo, or installation_id is wrong"
+            hint "fix at: https://github.com/settings/installations/$(jq -r '.installation_id // ""' "$BOT_CONFIG")"
+            ;;
+    esac
 fi
 
 # --- Project config in repo ---------------------------------------------------
@@ -220,6 +239,16 @@ if [[ -f "CLAUDE.md" ]] && grep -qF "BEGIN github-project skill workflow" CLAUDE
 else
     warn "claude-md" "workflow section not in CLAUDE.md"
     hint "run: scripts/setup-project.sh"
+fi
+
+# --- Summary ------------------------------------------------------------------
+
+echo ""
+echo "=== Summary ==="
+printf 'PASS: %d  WARN: %d  FAIL: %d  SKIPPED: %d\n' \
+    "$_CNT_PASS" "$_CNT_WARN" "$_CNT_FAIL" "$_CNT_SKIP"
+if [[ ${#_SKIPPED_NAMES[@]} -gt 0 ]]; then
+    echo "Skipped: $(IFS=', '; echo "${_SKIPPED_NAMES[*]}")"
 fi
 
 exit $EXIT_CODE
