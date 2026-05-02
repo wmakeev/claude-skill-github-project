@@ -11,8 +11,9 @@ Configuration is read from ~/.config/claude-github-bot/config.json with structur
 }
 
 Usage:
-    python3 get_token.py                     # uses installation_id from config
-    python3 get_token.py <installation_id>   # explicit override
+    python3 get_token.py                     # prints installation access token
+    python3 get_token.py <installation_id>   # explicit installation_id override
+    python3 get_token.py --app-info          # prints JSON {"slug":"...","login":"...[bot]"}
 
 The script prints the token to stdout (no trailing newline) so it can be
 captured into an env var:
@@ -44,7 +45,6 @@ def main() -> int:
     cfg = json.loads(CONFIG_PATH.read_text())
     app_id = cfg["app_id"]
     key_path = Path(cfg["private_key_path"]).expanduser()
-    installation_id = sys.argv[1] if len(sys.argv) > 1 else cfg["installation_id"]
 
     if not key_path.exists():
         sys.stderr.write(f"Private key not found: {key_path}\n")
@@ -56,6 +56,27 @@ def main() -> int:
     now = int(time.time())
     payload = {"iat": now - 60, "exp": now + 9 * 60, "iss": app_id}
     app_jwt = jwt.encode(payload, private_key, algorithm="RS256")
+
+    # --app-info mode: return App slug/login via GET /app (uses JWT, not installation token).
+    if len(sys.argv) > 1 and sys.argv[1] == "--app-info":
+        resp = requests.get(
+            "https://api.github.com/app",
+            headers={
+                "Authorization": f"Bearer {app_jwt}",
+                "Accept": "application/vnd.github+json",
+            },
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            sys.stderr.write(f"GitHub returned {resp.status_code}: {resp.text}\n")
+            return 1
+        slug = resp.json().get("slug", "")
+        sys.stdout.write(json.dumps({"slug": slug, "login": f"{slug}[bot]"}))
+        return 0
+
+    installation_id = (
+        sys.argv[1] if len(sys.argv) > 1 else cfg["installation_id"]
+    )
 
     # Exchange JWT for an installation token.
     url = (
