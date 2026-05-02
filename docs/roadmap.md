@@ -26,7 +26,7 @@ The execution side of the workflow is a natural separate skill, not an extension
 
 Why a separate skill: scope and trigger conditions are different. `github-project` triggers on configuration questions ("set up the board", "diagnose why X failed"). The execution skill triggers on per-task questions ("start working on #42", "open a PR for this branch").
 
-Both skills should share the bot config and project pointer — that's exactly what `~/.claude/github-bot/config.json` and `claude-project.json` are for. They are skill-independent state.
+Both skills should share the bot config and project pointer — that's exactly what `~/.config/claude-github-bot/config.json` and `claude-project.json` are for. They are skill-independent state.
 
 ## Known gaps in v1
 
@@ -92,7 +92,7 @@ If `project-spec.sh` adds a new label (e.g. `security`), `setup-project.sh` will
 
 ### Multi-bot scenarios
 
-The current scheme assumes one bot per machine, used by every project. If the user ever needs different bots for different projects (e.g. an org-owned bot for work projects and a personal bot for personal projects), the layout breaks. The fix would be to put `bot_login` (or a per-project bot pointer) into `claude-project.json` and let `~/.claude/github-bot/` hold multiple configs keyed by login.
+The current scheme assumes one bot per machine, used by every project. If the user ever needs different bots for different projects (e.g. an org-owned bot for work projects and a personal bot for personal projects), the layout breaks. The fix would be to put `bot_login` (or a per-project bot pointer) into `claude-project.json` and let `~/.config/claude-github-bot/` hold multiple configs keyed by login.
 
 ### Project number changes
 

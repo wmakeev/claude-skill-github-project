@@ -6,13 +6,13 @@ Why the skill is built the way it is. Read this before making structural changes
 
 ### Bot config and private key live outside the repo
 
-`~/.claude/github-bot/` holds the App's private key, `config.json` (App ID, installation ID, bot login), and `get_token.py`.
+`~/.config/claude-github-bot/` holds the App's private key, `config.json` (App ID, installation ID, bot login), and `get_token.py`.
 
 **Why not in the repo:** the private key is a secret. Even if the repo is private, the convention "secrets never touch git" is worth keeping unconditionally. The skill is also designed for a public repo (open-source).
 
 **Why not in `.github/` of the repo:** the user finds `.github/` confusing because they read it as "GitHub system / CI files". They explicitly preferred the repo root for the per-project config file.
 
-**Why one bot for all projects (not per-repo bots):** explicit user requirement. This means the bot config is a per-machine concern, not per-repo. `~/.claude/github-bot/` is the right scope.
+**Why one bot for all projects (not per-repo bots):** explicit user requirement. This means the bot config is a per-machine concern, not per-repo. `~/.config/claude-github-bot/` is the right scope.
 
 ### Per-project config in repo root, not `.github/`
 

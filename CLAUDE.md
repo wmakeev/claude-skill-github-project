@@ -12,7 +12,7 @@ Three operational layers, each with a corresponding script:
 
 | Layer | Script | Scope |
 |---|---|---|
-| Bot config | `scripts/setup-bot.sh` | One-time per machine (`~/.claude/github-bot/`) |
+| Bot config | `scripts/setup-bot.sh` | One-time per machine (`~/.config/claude-github-bot/`) |
 | Project config | `scripts/setup-project.sh` | Per repo (`claude-project.json`) |
 | Diagnostic | `scripts/diagnose.sh` | Read-only; always the first step |
 
@@ -27,8 +27,8 @@ Three operational layers, each with a corresponding script:
 
 | What | Where |
 |---|---|
-| Bot private key + config | `~/.claude/github-bot/` (never in repo) |
-| Token helper | `~/.claude/github-bot/get_token.py` |
+| Bot private key + config | `~/.config/claude-github-bot/` (never in repo) |
+| Token helper | `~/.config/claude-github-bot/get_token.py` |
 | Project pointer (owner + project number) | `claude-project.json` (repo root, committed) |
 | Issue template | `.github/ISSUE_TEMPLATE/task.md` |
 | Workflow doc snippet | `templates/CLAUDE.md.snippet` (inserted between markers in project CLAUDE.md) |
@@ -40,7 +40,7 @@ All GitHub-side IDs (project node ID, field IDs, option IDs) are resolved via `g
 - **No auto-fix for option drift** — if `Impact`/`Effort`/`Status` options diverge from spec, scripts report it but do not modify. Auto-rewrite would corrupt values pinned to existing cards.
 - **Confirmation before every write** — `confirm()` defaults to "no"; bypass with `NONINTERACTIVE=1` (for tests only).
 - **`gh` ≥ 2.20 required** — scripts use `gh project` subcommands; `diagnose.sh` checks the version.
-- **One bot, all projects** — bot config is per-machine in `~/.claude/github-bot/`, not per-repo.
+- **One bot, all projects** — bot config is per-machine in `~/.config/claude-github-bot/`, not per-repo.
 
 ## Running the scripts
 
@@ -52,7 +52,7 @@ bash scripts/setup-project.sh     # configure project for current repo (interact
 
 Get a bot token for programmatic `gh` calls:
 ```bash
-GH_TOKEN=$(python3 ~/.claude/github-bot/get_token.py) gh issue comment 42 --body "..."
+GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) gh issue comment 42 --body "..."
 ```
 
 ## No automated tests

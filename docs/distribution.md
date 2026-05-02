@@ -106,7 +106,7 @@ The skill itself produces no build artifacts. Only protect against editor noise 
 
 The repo is public (open-source). This means:
 
-- The bot config and private key MUST stay outside the repo (already enforced by storing them in `~/.claude/github-bot/`).
+- The bot config and private key MUST stay outside the repo (already enforced by storing them in `~/.config/claude-github-bot/`).
 - `claude-project.json` in the user's own project repos contains only `owner` + `project_number`, which are public information anyway. Safe to commit.
 - The skill scripts assume the user runs them. They do not exfiltrate data, but a future contributor could add something that does. Standard open-source caveat — mention in README that the user should review skill code before installing.
 
@@ -127,7 +127,7 @@ When the skill is updated:
 
 1. Edit on Machine A, commit, push.
 2. On Machine B, `git pull` inside `~/.claude/skills/github-project`.
-3. Bot config (`~/.claude/github-bot/`) is per-machine and not synced. If it doesn't exist on Machine B, the user runs `scripts/setup-bot.sh` once.
+3. Bot config (`~/.config/claude-github-bot/`) is per-machine and not synced. If it doesn't exist on Machine B, the user runs `scripts/setup-bot.sh` once.
 4. Project pointer (`claude-project.json`) is in each user-project repo and travels with `git clone` of that project.
 
 ## Update discipline

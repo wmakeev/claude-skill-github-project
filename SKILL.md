@@ -39,7 +39,7 @@ Exit codes: `0` = clean, `1` = warnings, `2` = failures.
 
 ### 1. Bot setup (one-time per machine)
 
-`scripts/setup-bot.sh` configures `~/.claude/github-bot/` with the App's private key, `config.json`, and the `get_token.py` helper. The bot is shared across all the user's projects, so this runs once per machine and again only when:
+`scripts/setup-bot.sh` configures `~/.config/claude-github-bot/` with the App's private key, `config.json`, and the `get_token.py` helper. The bot is shared across all the user's projects, so this runs once per machine and again only when:
 
 - the App's installation ID changes (e.g. installed on more repos)
 - the private key is rotated
@@ -50,7 +50,7 @@ The script is interactive and idempotent: existing values are pre-filled as defa
 After setup, programmatic actions are token-prefixed:
 
 ```bash
-GH_TOKEN=$(python3 ~/.claude/github-bot/get_token.py) gh issue comment 42 --body "..."
+GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) gh issue comment 42 --body "..."
 ```
 
 ### 2. Project setup (per repo)
@@ -89,9 +89,9 @@ Edit this file when the convention itself changes; both `setup-project.sh` and `
 
 | What | Where | In repo? |
 |---|---|---|
-| Private key | `~/.claude/github-bot/<name>.private-key.pem` | No |
-| Bot config (App ID, installation ID, login) | `~/.claude/github-bot/config.json` | No |
-| Token helper | `~/.claude/github-bot/get_token.py` | No |
+| Private key | `~/.config/claude-github-bot/<name>.private-key.pem` | No |
+| Bot config (App ID, installation ID, login) | `~/.config/claude-github-bot/config.json` | No |
+| Token helper | `~/.config/claude-github-bot/get_token.py` | No |
 | Project pointer (owner, project number) | `claude-project.json` (repo root) | Yes |
 | Issue template | `.github/ISSUE_TEMPLATE/task.md` | Yes |
 | Workflow doc | `CLAUDE.md` (between markers) | Yes |
@@ -112,7 +112,7 @@ All other GitHub-side IDs (project node ID, field IDs, option IDs) are resolved 
 **Cloned on a new machine**
 ```
 1. bash scripts/diagnose.sh           # will likely flag missing bot
-2. bash scripts/setup-bot.sh          # restore ~/.claude/github-bot/
+2. bash scripts/setup-bot.sh          # restore ~/.config/claude-github-bot/
 3. (claude-project.json is already in the repo, nothing else needed)
 ```
 

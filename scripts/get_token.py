@@ -2,7 +2,7 @@
 """
 Generate a short-lived GitHub App installation access token.
 
-Configuration is read from ~/.claude/github-bot/config.json with structure:
+Configuration is read from ~/.config/claude-github-bot/config.json with structure:
 {
   "app_id": "3172171",
   "installation_id": "118624077",
@@ -16,7 +16,7 @@ Usage:
 
 The script prints the token to stdout (no trailing newline) so it can be
 captured into an env var:
-    GH_TOKEN=$(python3 ~/.claude/github-bot/get_token.py)
+    GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py)
 """
 import json
 import sys
@@ -32,7 +32,7 @@ except ImportError as e:
     )
     sys.exit(1)
 
-CONFIG_PATH = Path.home() / ".claude" / "github-bot" / "config.json"
+CONFIG_PATH = Path.home() / ".config" / "claude-github-bot" / "config.json"
 
 
 def main() -> int:

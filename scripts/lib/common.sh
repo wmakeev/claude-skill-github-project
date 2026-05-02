@@ -6,7 +6,7 @@ set -euo pipefail
 
 # --- Paths --------------------------------------------------------------------
 
-BOT_HOME="${HOME}/.claude/github-bot"
+BOT_HOME="${HOME}/.config/claude-github-bot"
 BOT_CONFIG="${BOT_HOME}/config.json"
 BOT_TOKEN_SCRIPT="${BOT_HOME}/get_token.py"
 

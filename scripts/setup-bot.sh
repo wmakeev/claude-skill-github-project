@@ -2,7 +2,7 @@
 # Set up the GitHub bot account on this machine.
 #
 # This is a one-time setup per machine, not per repo. The bot config and
-# private key live under ~/.claude/github-bot/ and are reused by every
+# private key live under ~/.config/claude-github-bot/ and are reused by every
 # project that uses this skill.
 #
 # Re-running this script is safe: it detects an existing config and offers
@@ -15,7 +15,7 @@ source "$SCRIPT_DIR/lib/common.sh"
 require_cmd python3
 require_cmd jq
 
-# --- Ensure ~/.claude/github-bot/ exists --------------------------------------
+# --- Ensure ~/.config/claude-github-bot/ exists --------------------------------------
 
 mkdir -p "$BOT_HOME"
 chmod 700 "$BOT_HOME"
