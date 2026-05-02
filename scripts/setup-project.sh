@@ -26,7 +26,13 @@ if ! project_config_exists; then
     owner=$(printf '%s' "$repo_info" | cut -f1)
     repo=$(printf  '%s' "$repo_info" | cut -f2)
 
-    cat <<EOF >&2
+    # Allow overriding owner via env (useful for org-owned projects).
+    [[ -n "${GITHUB_OWNER:-}" ]] && owner="$GITHUB_OWNER"
+
+    if [[ -n "${GITHUB_PROJECT_NUMBER:-}" ]]; then
+        project_number="$GITHUB_PROJECT_NUMBER"
+    elif is_tty; then
+        cat <<EOF >&2
 
 Repo detected: $owner/$repo
 
@@ -34,7 +40,12 @@ Before continuing, make sure a Project (Board template) exists for this repo.
 If not: open https://github.com/users/$owner/projects → New project → Board.
 
 EOF
-    read -r -p "Project number (the integer in the project URL): " project_number </dev/tty
+        read -r -p "Project number (the integer in the project URL): " project_number </dev/tty
+    else
+        log_error "No TTY available. Set GITHUB_PROJECT_NUMBER env var or run from a terminal."
+        exit 1
+    fi
+
     [[ "$project_number" =~ ^[0-9]+$ ]] || { log_error "Not a number."; exit 1; }
 
     confirm "Create $PROJECT_CONFIG_FILE with owner=$owner, project=$project_number?" \
