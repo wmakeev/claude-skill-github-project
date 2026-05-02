@@ -22,14 +22,21 @@ log_warn()  { printf '\033[0;33m[warn]\033[0m  %s\n' "$*" >&2; }
 log_error() { printf '\033[0;31m[error]\033[0m %s\n' "$*" >&2; }
 log_ok()    { printf '\033[0;32m[ok]\033[0m    %s\n' "$*" >&2; }
 
+# --- TTY detection ------------------------------------------------------------
+
+# is_tty — true if /dev/tty is readable (interactive terminal available).
+is_tty() { [[ -r /dev/tty ]]; }
+
 # --- Confirmation prompt (interactive) ----------------------------------------
 # Used before every modifying action. Defaults to "no" — requires explicit yes.
 # Bypass with NONINTERACTIVE=1 (e.g. for tests; not recommended in normal use).
 
 confirm() {
     local prompt="${1:-Proceed?}"
-    if [[ "${NONINTERACTIVE:-0}" == "1" ]]; then
-        return 0
+    [[ "${NONINTERACTIVE:-0}" == "1" ]] && return 0
+    if ! is_tty; then
+        log_error "No TTY available and NONINTERACTIVE=1 not set; refusing to prompt for: $prompt"
+        return 1
     fi
     local reply
     read -r -p "$prompt [y/N] " reply </dev/tty
