@@ -241,6 +241,11 @@ else
     hint "run: scripts/setup-project.sh"
 fi
 
+if [[ -f "CLAUDE.md" ]] && grep -qF "~/.claude/github-bot/get_token.py" CLAUDE.md; then
+    warn "claude-md" "CLAUDE.md references legacy bot path '~/.claude/github-bot/get_token.py'"
+    hint "re-run scripts/setup-project.sh — it will offer to replace the workflow section with the current template (correct path is ~/.config/claude-github-bot/get_token.py)"
+fi
+
 # --- Summary ------------------------------------------------------------------
 
 echo ""

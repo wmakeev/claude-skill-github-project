@@ -40,8 +40,27 @@ Type is one of `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`. Issue number 
 Programmatic comments, PR reviews, and project mutations should be performed via the configured GitHub App bot, not the user account. Get a token with:
 
 ```bash
-GH_TOKEN=$(python3 ~/.claude/github-bot/get_token.py) gh issue comment <num> --body "..."
+GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) gh issue comment <num> --body "..."
 ```
+
+**Verifying the token belongs to the bot.** `gh api user` does **not** work
+with installation tokens (returns 403 — that's by design for GitHub Apps,
+not a broken token). Use one of:
+
+```bash
+# Via GraphQL — works with installation tokens:
+GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) \
+    gh api graphql -f query='{ viewer { login } }' --jq '.data.viewer.login'
+# → mvv-claude-code-bot[bot]
+
+# Or read the cached login from bot config (no API call):
+jq -r .bot_login ~/.config/claude-github-bot/config.json
+```
+
+If you run `gh api user` without `GH_TOKEN`, it falls back to your personal
+`gh auth` — every subsequent `gh` call without `GH_TOKEN=` will run as you,
+not the bot. Always set `GH_TOKEN=$(... get_token.py)` for bot-attributed
+actions.
 
 ### Diagnostics
 

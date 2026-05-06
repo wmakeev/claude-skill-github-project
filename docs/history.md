@@ -4,6 +4,55 @@ A running log of issues discovered in production use, their root causes, and the
 
 ---
 
+## 2026-05-06 — Stale bot-token path leaked into target repos via CLAUDE.md snippet
+
+**Discovered by:** an agent in a third-party repo that was set up via this skill.
+The agent followed the workflow snippet in the project's CLAUDE.md and hit
+`No such file: ~/.claude/github-bot/get_token.py`.
+
+### Problem 1 — wrong path in `templates/CLAUDE.md.snippet`
+
+**Symptom:** the documented command in any project set up by setup-project.sh
+pointed at `~/.claude/github-bot/get_token.py`, which has never existed on
+the standard install. Real path is `~/.config/claude-github-bot/get_token.py`.
+
+**Root cause:** snippet drifted from the rest of the skill (lib/common.sh,
+get_token.py, SKILL.md, this repo's CLAUDE.md all referenced the correct path).
+
+**Fix:** updated `templates/CLAUDE.md.snippet`. Re-running `setup-project.sh`
+in already-configured repos detects the drift via the existing snippet diff
+check (setup-project.sh step 7) and offers to replace.
+
+### Problem 2 — silent fallback to personal `gh auth` masquerading as bot
+
+**Symptom:** when the documented command failed, the agent tried `gh api user`
+without `GH_TOKEN` to verify identity. `gh` silently used the user's personal
+auth and returned the user's login — agent could have continued posting
+comments under the wrong identity.
+
+**Fix:** added an explicit "Verifying the token belongs to the bot" subsection
+to the snippet with a working GraphQL command (`viewer { login }`), a one-liner
+to read `bot_login` from config, and a warning that `gh api user` without
+`GH_TOKEN` falls through to personal auth.
+
+### Problem 3 — `gh api user` returns 403 for installation tokens (rediscovered)
+
+**Symptom:** even with the right `GH_TOKEN`, `gh api user` returns 403 — agents
+spend time investigating a non-bug. This is the same pitfall already fixed for
+setup-bot.sh / diagnose.sh in 2026-05-02, but the snippet inserted into target
+repos didn't carry that knowledge.
+
+**Fix:** snippet now documents the GraphQL viewer query as the canonical
+identity check and explains the 403 is by design.
+
+### Problem 4 — diagnose.sh did not flag the stale path in already-configured repos
+
+**Fix:** added a check in `diagnose.sh` that warns if `CLAUDE.md` still
+references `~/.claude/github-bot/get_token.py`, with a `setup-project.sh`
+suggestion.
+
+---
+
 ## 2026-05-02 — Non-TTY compatibility + diagnose correctness
 
 **Discovered by:** a Claude Code agent running in the `wmakeev/simplex` repo. The agent invoked the skill's setup scripts via the Bash tool, which runs without a controlling terminal.
