@@ -4,6 +4,20 @@ A running log of issues discovered in production use, their root causes, and the
 
 ---
 
+## 2026-05-06 — Agent used bot token to merge PR, got "Resource not accessible by integration"
+
+**Discovered by:** an agent in a target repo that tried `GH_TOKEN=$(... get_token.py) gh pr merge`.
+
+**Symptom:** `GraphQL: Resource not accessible by integration (mergePullRequest)`.
+
+**Root cause:** The `Bot-attributed actions` section in `templates/CLAUDE.md.snippet` listed "PR reviews" among bot actions without any caveat. An agent interpreted that as "all PR-related actions should use the bot token", including merge.
+
+GitHub App installation tokens are intentionally blocked from `mergePullRequest` regardless of the App's permission grants — this is a GitHub platform restriction, not a configuration issue.
+
+**Fix:** Rewrote the section as "Bot-attributed actions vs. user actions" with an explicit table. Bot column: comments, labels, project mutations. User column (no GH_TOKEN): push, merge PR, releases. Included the exact error message so an agent that hits it recognises the cause immediately.
+
+---
+
 ## 2026-05-06 — Stale bot-token path leaked into target repos via CLAUDE.md snippet
 
 **Discovered by:** an agent in a third-party repo that was set up via this skill.

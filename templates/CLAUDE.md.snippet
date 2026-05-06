@@ -35,9 +35,23 @@ Type is one of `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`. Issue number 
 7. Distill non-obvious decisions from PR comments into `docs/design-decisions.md`
 8. Delete branch
 
-### Bot-attributed actions
+### Bot-attributed actions vs. user actions
 
-Programmatic comments, PR reviews, and project mutations should be performed via the configured GitHub App bot, not the user account. Get a token with:
+GitHub App installation tokens are scoped to **comments and project metadata**. Repository write operations are blocked even if the App has write permissions.
+
+| Action | Who |
+|---|---|
+| Issue / PR comment | Bot |
+| Move project card, set custom field | Bot |
+| Push commits / branches | User |
+| Add / remove labels | User |
+| **Merge a PR** | **User** |
+| Create / delete releases | User |
+
+Using the bot token for `gh pr merge` produces:
+`GraphQL: Resource not accessible by integration (mergePullRequest)`
+
+For bot-attributed comments and mutations, get a token with:
 
 ```bash
 GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) gh issue comment <num> --body "..."
