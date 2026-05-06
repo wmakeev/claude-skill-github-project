@@ -16,7 +16,7 @@ Why the skill is built the way it is. Read this before making structural changes
 
 ### Per-project config in repo root, not `.github/`
 
-`claude-project.json` lives at the repo root. Holds only `owner` + `project_number`. Everything else (project node ID, field IDs, option IDs) is resolved on-the-fly via GraphQL.
+`github-project.json` lives at the repo root. Holds only `owner` + `project_number`. Everything else (project node ID, field IDs, option IDs) is resolved on-the-fly via GraphQL.
 
 **Why root and not `.github/`:** see above — user preference.
 
@@ -28,7 +28,7 @@ Why the skill is built the way it is. Read this before making structural changes
 
 ### No schema version in any config file
 
-We considered a `schemaVersion` field in `claude-project.json` to detect "this repo was set up by an older skill version, needs upgrade". Rejected.
+We considered a `schemaVersion` field in `github-project.json` to detect "this repo was set up by an older skill version, needs upgrade". Rejected.
 
 **Why:** the user's original ask included this, but on reflection we agreed the answer is "the diagnose script is the version check". Diagnose queries the live GitHub state and compares to the spec on every run. Drift is reported regardless of which skill version originally created the project. This is more robust than a stored version number, which can lie if someone edits the project via UI.
 
@@ -42,7 +42,7 @@ We considered a `schemaVersion` field in `claude-project.json` to detect "this r
 
 **Why:** explicit user choice. The user wants the same convention across all their projects. If a per-project deviation appears, the right move is to edit the spec for everyone, not fork it.
 
-**When to revisit:** if multiple users adopt the skill and want different conventions, the spec needs to be promoted to a config file. The split would naturally be: a default spec in the skill, optionally overridden by `.claude-project-spec.sh` in the repo root.
+**When to revisit:** if multiple users adopt the skill and want different conventions, the spec needs to be promoted to a config file. The split would naturally be: a default spec in the skill, optionally overridden by `.github-project-spec.sh` in the repo root.
 
 ### Direction field has no enforced options
 

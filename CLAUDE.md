@@ -13,7 +13,7 @@ Three operational layers, each with a corresponding script:
 | Layer | Script | Scope |
 |---|---|---|
 | Bot config | `scripts/setup-bot.sh` | One-time per machine (`~/.config/claude-github-bot/`) |
-| Project config | `scripts/setup-project.sh` | Per repo (`claude-project.json`) |
+| Project config | `scripts/setup-project.sh` | Per repo (`github-project.json`) |
 | Diagnostic | `scripts/diagnose.sh` | Read-only; always the first step |
 
 **Always run `diagnose.sh` first.** It produces `[PASS]`/`[WARN]`/`[FAIL]` lines with `[INFO] suggestion:` hints. Exit code: 0 = clean, 1 = warnings, 2 = failures.
@@ -29,7 +29,7 @@ Three operational layers, each with a corresponding script:
 |---|---|
 | Bot private key + config | `~/.config/claude-github-bot/` (never in repo) |
 | Token helper | `~/.config/claude-github-bot/get_token.py` |
-| Project pointer (owner + project number) | `claude-project.json` (repo root, committed) |
+| Project pointer (owner + project number) | `github-project.json` (repo root, committed) |
 | Issue template | `.github/ISSUE_TEMPLATE/task.md` |
 | Workflow doc snippet | `templates/CLAUDE.md.snippet` (inserted between markers in project CLAUDE.md) |
 

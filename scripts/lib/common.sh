@@ -13,7 +13,7 @@ BOT_TOKEN_SCRIPT="${BOT_HOME}/get_token.py"
 # Project config in the repo root. Single file with everything Claude needs
 # to talk to a specific project: owner, project number. Project node ID and
 # all field/option IDs are resolved on the fly to avoid stale-cache problems.
-PROJECT_CONFIG_FILE="claude-project.json"
+PROJECT_CONFIG_FILE="github-project.json"
 
 # --- Logging ------------------------------------------------------------------
 

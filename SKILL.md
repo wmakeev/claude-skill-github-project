@@ -1,6 +1,6 @@
 ---
 name: github-project
-description: Set up, diagnose, and maintain a GitHub Project (board) for a repository, including a GitHub App bot for automated actions, custom fields (Impact, Effort, Direction), repository labels, an issue template, and a workflow section in CLAUDE.md. Use this skill whenever the user wants to "set up the project", "configure the kanban board", "set up issue tracking", "configure the bot", "diagnose project setup", or works on a repo that already has a `claude-project.json` and asks anything related to issues, the project board, custom fields, branch naming, or PR workflow. Also use it when the user mentions a stale or broken token, a clone on a new machine, or asks why a project mutation failed — the diagnose script is the entry point for all of that.
+description: Set up, diagnose, and maintain a GitHub Project (board) for a repository, including a GitHub App bot for automated actions, custom fields (Impact, Effort, Direction), repository labels, an issue template, and a workflow section in CLAUDE.md. Use this skill whenever the user wants to "set up the project", "configure the kanban board", "set up issue tracking", "configure the bot", "diagnose project setup", or works on a repo that already has a `github-project.json` and asks anything related to issues, the project board, custom fields, branch naming, or PR workflow. Also use it when the user mentions a stale or broken token, a clone on a new machine, or asks why a project mutation failed — the diagnose script is the entry point for all of that.
 ---
 
 # github-project
@@ -10,7 +10,7 @@ Manages an opinionated GitHub Project (Board) setup for issue-driven development
 ## When to use
 
 - The user says "set up the project / kanban / issue tracking" on a repo
-- The user works on a repo that already has `claude-project.json` and asks about issues, the board, fields, or workflow
+- The user works on a repo that already has `github-project.json` and asks about issues, the board, fields, or workflow
 - A bot token, project mutation, or labelling action fails
 - The user clones an existing repo on a new machine and bot/project actions fail
 - The user wants to re-sync the project state with the spec after manual edits
@@ -85,7 +85,7 @@ GH_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py) gh issue comment 42
 
 `scripts/setup-project.sh` brings the GitHub Project for the current repo into alignment with the spec in `scripts/lib/project-spec.sh`. It:
 
-1. Creates `claude-project.json` (owner + project number) on first run, asking interactively
+1. Creates `github-project.json` (owner + project number) on first run, asking interactively
 2. Resolves the project's node ID and current fields via GraphQL
 3. For each managed custom field (`Impact`, `Effort`, `Direction`), creates it if missing; if it exists but options drift, **reports the drift but does not auto-fix** (auto-fixing would risk losing values on existing items)
 4. Verifies the `Status` field has the expected columns (`Backlog → Todo → In Progress → In Review → Done`)
@@ -120,7 +120,7 @@ Edit this file when the convention itself changes; both `setup-project.sh` and `
 | Private key | `~/.config/claude-github-bot/<name>.private-key.pem` | No |
 | Bot config (App ID, installation ID, login) | `~/.config/claude-github-bot/config.json` | No |
 | Token helper | `~/.config/claude-github-bot/get_token.py` | No |
-| Project pointer (owner, project number) | `claude-project.json` (repo root) | Yes |
+| Project pointer (owner, project number) | `github-project.json` (repo root) | Yes |
 | Issue template | `.github/ISSUE_TEMPLATE/task.md` | Yes |
 | Workflow doc | `CLAUDE.md` (between markers) | Yes |
 
@@ -141,7 +141,7 @@ All other GitHub-side IDs (project node ID, field IDs, option IDs) are resolved 
 ```
 1. bash scripts/diagnose.sh           # will likely flag missing bot
 2. bash scripts/setup-bot.sh          # restore ~/.config/claude-github-bot/
-3. (claude-project.json is already in the repo, nothing else needed)
+3. (github-project.json is already in the repo, nothing else needed)
 ```
 
 **Spec changed (e.g. new label added to project-spec.sh)**
