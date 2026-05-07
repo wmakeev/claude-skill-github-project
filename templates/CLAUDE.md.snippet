@@ -30,7 +30,26 @@ Type is one of `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`. Issue number 
 2. Read the full issue including comments: `gh issue view <num> --comments` — comments often contain scope changes, clarifications, or corrections added after the issue was created. Always run this command before planning any work.
 3. `git checkout -b <type>/<num>-<desc>` off `main`
 4. Implement, commit
-5. Open PR with `Closes #<num>` in body → moves to **In Review**
+5. Open PR with `Closes #<num>` in body, then move the issue card to **In Review** with the bot:
+   ```bash
+   OWNER=$(jq -r .owner github-project.json)
+   PROJECT_NUMBER=$(jq -r .project_number github-project.json)
+   BOT_TOKEN=$(python3 ~/.config/claude-github-bot/get_token.py)
+
+   PROJECT_ID=$(GH_TOKEN=$BOT_TOKEN gh project view "$PROJECT_NUMBER" \
+       --owner "$OWNER" --format json | jq -r '.id')
+   FIELD_JSON=$(GH_TOKEN=$BOT_TOKEN gh project field-list "$PROJECT_NUMBER" \
+       --owner "$OWNER" --format json | jq '.fields[] | select(.name == "Status")')
+   FIELD_ID=$(echo "$FIELD_JSON" | jq -r '.id')
+   OPTION_ID=$(echo "$FIELD_JSON" | jq -r '.options[] | select(.name == "In Review") | .id')
+   ITEM_ID=$(GH_TOKEN=$BOT_TOKEN gh project item-list "$PROJECT_NUMBER" \
+       --owner "$OWNER" --limit 200 --format json \
+       | jq -r --argjson n <issue-num> '.items[] | select(.content.number == $n and .content.type == "Issue") | .id')
+   GH_TOKEN=$BOT_TOKEN gh project item-edit \
+       --id "$ITEM_ID" --field-id "$FIELD_ID" \
+       --project-id "$PROJECT_ID" --single-select-option-id "$OPTION_ID"
+   ```
+   Replace `<issue-num>` with the actual issue number (integer).
 6. Inline review comments on the PR
 7. Merge → issue auto-closes → move card to **Done**
 8. Distill non-obvious decisions from PR comments into `docs/design-decisions.md`

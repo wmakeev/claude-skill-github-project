@@ -4,6 +4,16 @@ A running log of issues discovered in production use, their root causes, and the
 
 ---
 
+## 2026-05-07 — Agent left card in «In Progress» after opening PR
+
+**Discovered by:** user noticed the project card didn't move to «In Review» after the agent opened a PR.
+
+**Root cause:** Step 5 of the lifecycle said "→ moves to In Review" implying GitHub Projects v2 auto-moves the card when a PR is opened. It does not — `Closes #<num>` only auto-closes the issue on merge; status columns are unaffected.
+
+**Fix:** Step 5 now includes explicit bot-token commands to resolve the Status field ID, the «In Review» option ID, and the issue's item ID, then call `gh project item-edit` to set the status.
+
+---
+
 ## 2026-05-07 — Agent skipped issue comments, missed scope corrections
 
 **Discovered by:** user noticed agent implemented the original issue description while ignoring four scope corrections posted as comments.
