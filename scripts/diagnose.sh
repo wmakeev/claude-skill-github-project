@@ -235,7 +235,12 @@ else
 fi
 
 if [[ -f "CLAUDE.md" ]] && grep -qF "BEGIN github-project skill workflow" CLAUDE.md; then
-    pass "claude-md" "workflow section present"
+    if grep -qF "@~/.claude/skills/github-project/templates/CLAUDE.md.snippet" CLAUDE.md; then
+        pass "claude-md" "workflow section present (@-import)"
+    else
+        warn "claude-md" "workflow section uses old inline text instead of @-import"
+        hint "re-run: scripts/setup-project.sh — it will offer to replace with the @-import form"
+    fi
 else
     warn "claude-md" "workflow section not in CLAUDE.md"
     hint "run: scripts/setup-project.sh"

@@ -213,48 +213,54 @@ else
     fi
 fi
 
-# --- Step 7: ensure CLAUDE.md has the workflow snippet ------------------------
+# --- Step 7: ensure CLAUDE.md has the workflow @-import ----------------------
+#
+# Instead of copying the full snippet text, we write a single @-import line.
+# Claude Code resolves it at session start, so the workflow instructions are
+# always read from the installed skill — no per-project text to keep in sync.
 
 CLAUDE_MD="CLAUDE.md"
 SNIPPET_BEGIN="<!-- BEGIN github-project skill workflow -->"
 SNIPPET_END="<!-- END github-project skill workflow -->"
-SNIPPET_FILE="$SCRIPT_DIR/../templates/CLAUDE.md.snippet"
+IMPORT_LINE="@~/.claude/skills/github-project/templates/CLAUDE.md.snippet"
+
+# Emit the three-line block that goes inside CLAUDE.md.
+skill_block() {
+    printf '%s\n' "$SNIPPET_BEGIN" "$IMPORT_LINE" "$SNIPPET_END"
+}
 
 if [[ ! -f "$CLAUDE_MD" ]]; then
-    if confirm "Create $CLAUDE_MD with workflow section?"; then
+    if confirm "Create $CLAUDE_MD with workflow @-import?"; then
         {
             echo "# Project context for Claude Code"
             echo
-            cat "$SNIPPET_FILE"
+            skill_block
         } > "$CLAUDE_MD"
         log_ok "Created $CLAUDE_MD."
     fi
 elif ! grep -qF "$SNIPPET_BEGIN" "$CLAUDE_MD"; then
-    if confirm "Append workflow section to existing $CLAUDE_MD?"; then
+    if confirm "Append workflow @-import to existing $CLAUDE_MD?"; then
         printf '\n' >> "$CLAUDE_MD"
-        cat "$SNIPPET_FILE" >> "$CLAUDE_MD"
+        skill_block >> "$CLAUDE_MD"
         log_ok "Appended workflow section."
     fi
 else
-    # Check if the snippet content is current.
-    current_snippet=$(awk "/$SNIPPET_BEGIN/,/$SNIPPET_END/" "$CLAUDE_MD")
-    spec_snippet=$(cat "$SNIPPET_FILE")
-    if [[ "$current_snippet" != "$spec_snippet" ]]; then
-        log_info "Workflow section in CLAUDE.md differs from skill version."
-        if confirm "Show diff?"; then
-            diff <(printf '%s\n' "$current_snippet") <(printf '%s\n' "$spec_snippet") || true
-        fi
-        if confirm "Replace with skill version?"; then
-            # Use a temp file because in-place sed across markers is fiddly.
-            awk -v begin="$SNIPPET_BEGIN" -v end="$SNIPPET_END" -v file="$SNIPPET_FILE" '
-                $0 ~ begin { in_block=1; while ((getline line < file) > 0) print line; close(file); next }
-                $0 ~ end   { in_block=0; next }
-                !in_block  { print }
-            ' "$CLAUDE_MD" > "$CLAUDE_MD.tmp" && mv "$CLAUDE_MD.tmp" "$CLAUDE_MD"
-            log_ok "Updated workflow section."
-        fi
+    # Section exists — check whether it already uses the @-import form.
+    current_block=$(awk "/$SNIPPET_BEGIN/,/$SNIPPET_END/" "$CLAUDE_MD")
+    expected_block=$(skill_block)
+    if [[ "$current_block" == "$expected_block" ]]; then
+        log_ok "CLAUDE.md workflow section up to date (@-import)."
     else
-        log_ok "CLAUDE.md workflow section up to date."
+        log_info "Workflow section found but does not use @-import (likely old inline text)."
+        if confirm "Replace with @-import line (skill template loads dynamically)?"; then
+            awk -v begin="$SNIPPET_BEGIN" -v end="$SNIPPET_END" \
+                -v import="$IMPORT_LINE" '
+                $0 ~ begin { print; print import; skip=1; next }
+                $0 ~ end   { print; skip=0; next }
+                !skip      { print }
+            ' "$CLAUDE_MD" > "$CLAUDE_MD.tmp" && mv "$CLAUDE_MD.tmp" "$CLAUDE_MD"
+            log_ok "Replaced inline text with @-import."
+        fi
     fi
 fi
 

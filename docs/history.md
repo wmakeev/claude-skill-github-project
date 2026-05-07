@@ -4,6 +4,16 @@ A running log of issues discovered in production use, their root causes, and the
 
 ---
 
+## 2026-05-06 — CLAUDE.md snippet was copied inline; drifted on skill updates
+
+**Problem:** `setup-project.sh` copied the full text of `templates/CLAUDE.md.snippet` into the project's `CLAUDE.md`. Every time the skill was updated, the per-project copy became stale and required manual re-run to sync.
+
+**Root cause:** Originally written before Claude Code supported `@path` imports in CLAUDE.md.
+
+**Fix:** Step 7 now writes a single `@~/.claude/skills/github-project/templates/CLAUDE.md.snippet` import line between the markers instead of the full text. Claude Code expands it at session start, so the instructions are always read from the installed skill version. Migration path: if the section contains old inline text, the script offers to replace it with the import line.
+
+---
+
 ## 2026-05-06 — Agent used bot token to merge PR, got "Resource not accessible by integration"
 
 **Discovered by:** an agent in a target repo that tried `GH_TOKEN=$(... get_token.py) gh pr merge`.
