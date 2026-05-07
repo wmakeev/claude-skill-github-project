@@ -4,6 +4,16 @@ A running log of issues discovered in production use, their root causes, and the
 
 ---
 
+## 2026-05-07 — Agent skipped issue comments, missed scope corrections
+
+**Discovered by:** user noticed agent implemented the original issue description while ignoring four scope corrections posted as comments.
+
+**Symptom:** `gh issue view <num>` shows `comments: N` but does not display comment text. Agent saw the count, didn't fetch the content, and planned work from the body alone.
+
+**Fix:** Added step 2 to the Per-issue lifecycle: `gh issue view <num> --comments` must be run before any planning or branching. Comments are the primary channel for post-creation scope changes.
+
+---
+
 ## 2026-05-06 — CLAUDE.md snippet was copied inline; drifted on skill updates
 
 **Problem:** `setup-project.sh` copied the full text of `templates/CLAUDE.md.snippet` into the project's `CLAUDE.md`. Every time the skill was updated, the per-project copy became stale and required manual re-run to sync.

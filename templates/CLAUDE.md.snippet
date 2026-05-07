@@ -27,13 +27,14 @@ Type is one of `feature/`, `fix/`, `refactor/`, `chore/`, `docs/`. Issue number 
 ### Per-issue lifecycle
 
 1. Pick from Backlog → move card to **In Progress**
-2. `git checkout -b <type>/<num>-<desc>` off `main`
-3. Implement, commit
-4. Open PR with `Closes #<num>` in body → moves to **In Review**
-5. Inline review comments on the PR
-6. Merge → issue auto-closes → move card to **Done**
-7. Distill non-obvious decisions from PR comments into `docs/design-decisions.md`
-8. Delete branch
+2. Read the full issue including comments: `gh issue view <num> --comments` — comments often contain scope changes, clarifications, or corrections added after the issue was created. Always run this command before planning any work.
+3. `git checkout -b <type>/<num>-<desc>` off `main`
+4. Implement, commit
+5. Open PR with `Closes #<num>` in body → moves to **In Review**
+6. Inline review comments on the PR
+7. Merge → issue auto-closes → move card to **Done**
+8. Distill non-obvious decisions from PR comments into `docs/design-decisions.md`
+9. Delete branch
 
 ### Bot-attributed actions vs. user actions
 
