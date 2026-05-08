@@ -63,7 +63,7 @@ There is no test suite (see `docs/roadmap.md#test-coverage`). Validation is done
 
 | File | When to update |
 |---|---|
-| `docs/design-decisions.md` | When a structural decision changes or a new tradeoff is made. |
+| `docs/adr/` | When a structural decision changes or a new tradeoff is made — write or update an ADR. |
 | `docs/roadmap.md` | When a planned item is implemented or a new known gap is identified. |
 
 ## Agent Journal Protocol

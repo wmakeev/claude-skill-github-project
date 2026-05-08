@@ -6,6 +6,7 @@
 
 | Date | File | Topic | Status |
 |------|------|-------|--------|
+| 2026-05-08 | [2026-05-08-design-decisions-to-adrs.md](./journal/2026-05-08-design-decisions-to-adrs.md) | Migrate design-decisions.md to individual ADRs | Done |
 | 2026-05-07 | [2026-05-07-card-in-review.md](./journal/2026-05-07-card-in-review.md) | Card not moved to «In Review» after opening PR | Done |
 | 2026-05-07 | [2026-05-07-issue-comments-required.md](./journal/2026-05-07-issue-comments-required.md) | Agent skipped issue comments, missed scope corrections | Done |
 | 2026-05-06 | [2026-05-06-claude-md-import.md](./journal/2026-05-06-claude-md-import.md) | CLAUDE.md snippet copied inline, drifted on skill updates | Done |

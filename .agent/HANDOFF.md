@@ -1,18 +1,20 @@
 # Handoff
 
-**Updated:** 2026-05-07 (current session)
+**Updated:** 2026-05-08 (current session)
 **Branch:** main
 **Status:** Done
 
 ## Current Goal
 
-Migrated all entries from `docs/history.md` into `.agent/journal/` — one file per distinct problem, named with a 2–4 word slug per the Journal Protocol.
+Migrated `docs/design-decisions.md` into 10 individual ADR files under `docs/adr/`.
 
 ## Completed
 
-- Created 6 journal entries covering all history.md records (2026-05-02, 2026-05-06 ×3, 2026-05-07 ×2)
-- Updated `.agent/INDEX.md` with all entries
-- Updated `.agent/HANDOFF.md` (this file)
+- Created ADR-0001 – ADR-0010 covering all decisions from `design-decisions.md`
+- Updated `docs/adr/README.md` index
+- Deleted `docs/design-decisions.md`
+- Fixed stale reference in `CLAUDE.md` ("Docs to update" table)
+- All changes committed on `main` (commits `6e44b73`, `7e65e34`, `4f6a7b2` + one more for CLAUDE.md fix pending)
 
 ## Not Yet Done
 
@@ -26,4 +28,4 @@ _None._
 
 1. Read `.agent/INDEX.md`
 2. Read this file
-3. Journal is fully populated from `docs/history.md` — no further migration needed.
+3. ADR migration is complete. Next session can proceed to any new task.
